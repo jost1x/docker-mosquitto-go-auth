@@ -7,7 +7,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./config/mosquitto.conf:/etc/mosquitto/mosquitto.conf:ro
-      - ./config/conf.d:/etc/mosquitto/conf.d:ro
+      - ./config/conf.d:/etc/mosquitto/conf.d
       - mosquitto_data:/mosquitto/data
     env_file:
       - ./.env
