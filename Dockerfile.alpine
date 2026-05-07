@@ -70,7 +70,7 @@ LABEL maintainer="your-email@example.com" \
 ARG GOAUTH_ARCH
 
 RUN set -ex; \
-    apk add --no-cache c-ares libssl3 cjson libedit tini gettext-envsubst && \
+    apk add --no-cache c-ares libssl3 cjson libedit libmicrohttpd sqlite-libs tini gettext-envsubst && \
     mkdir -p /var/lib/mosquitto /var/log/mosquitto /mosquitto && \
     addgroup -S mosquitto && \
     adduser -S -D -H -h /var/lib/mosquitto -s /sbin/nologin -G mosquitto mosquitto
@@ -87,8 +87,7 @@ COPY --from=mosquitto_builder /usr/local/lib/libmosquitto* /usr/local/lib/
 COPY --from=goauth_downloader /tmp/goauth/${GOAUTH_ARCH}/go-auth.so /mosquitto/
 COPY --from=goauth_downloader /tmp/goauth/${GOAUTH_ARCH}/pw /mosquitto/
 
-RUN ldconfig && \
-    chown -R mosquitto:mosquitto /var/log/mosquitto /var/lib/mosquitto
+RUN chown -R mosquitto:mosquitto /var/log/mosquitto /var/lib/mosquitto
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
