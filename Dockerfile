@@ -75,7 +75,7 @@ ARG GOAUTH_ARCH
 
 RUN set -ex; \
     apt-get update && \
-    apt-get install -y --no-install-recommends libc-ares2 libssl3 libcjson1 libedit2 tini && \
+    apt-get install -y --no-install-recommends libc-ares2 libssl3 libcjson1 libedit2 libmicrohttpd12 libsqlite3-0 tini && \
     rm -rf /var/lib/apt/lists/* && \
     mkdir -p /var/lib/mosquitto /var/log/mosquitto /mosquitto && \
     groupadd mosquitto && \
