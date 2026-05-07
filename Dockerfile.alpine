@@ -1,0 +1,104 @@
+# Define Mosquitto and libwebsockets version
+ARG MOSQUITTO_VERSION=2.1.2
+ARG LWS_VERSION=4.5.8
+ARG GOAUTH_VERSION=3.0.0
+ARG GOAUTH_ARCH=linux-amd64
+
+# Etapa 1: Builder de Mosquitto
+FROM alpine:3.20 AS mosquitto_builder
+ARG MOSQUITTO_VERSION
+ARG LWS_VERSION
+
+RUN set -ex; \
+    apk add --no-cache ca-certificates wget build-base cmake openssl-dev cjson-dev libedit-dev libmicrohttpd-dev sqlite-dev util-linux-dev c-ares-dev linux-headers
+
+RUN set -ex; \
+    wget https://github.com/warmcat/libwebsockets/archive/v${LWS_VERSION}.tar.gz -O /tmp/lws.tar.gz; \
+    mkdir -p /build/lws; \
+    tar --strip=1 -xf /tmp/lws.tar.gz -C /build/lws; \
+    cd /build/lws; \
+    cmake . \
+        -DCMAKE_BUILD_TYPE=MinSizeRel \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DLWS_IPV6=ON \
+        -DLWS_WITHOUT_BUILTIN_GETIFADDRS=ON \
+        -DLWS_WITHOUT_CLIENT=ON \
+        -DLWS_WITHOUT_EXTENSIONS=ON \
+        -DLWS_WITHOUT_TESTAPPS=ON \
+        -DLWS_WITH_HTTP2=OFF \
+        -DLWS_WITH_SHARED=OFF \
+        -DLWS_WITH_ZIP_FOPS=OFF \
+        -DLWS_WITH_ZLIB=OFF \
+        -DLWS_WITH_EXTERNAL_POLL=ON; \
+    make -j"$(nproc)"; \
+    make install; \
+    rm -rf /tmp/lws.tar.gz
+
+WORKDIR /app
+
+RUN set -ex; \
+    wget http://mosquitto.org/files/source/mosquitto-${MOSQUITTO_VERSION}.tar.gz -O /tmp/mosquitto.tar.gz; \
+    tar xzvf /tmp/mosquitto.tar.gz; \
+    cd mosquitto-${MOSQUITTO_VERSION}; \
+    make CFLAGS="-Wall -O2 -I/build/lws/include" LDFLAGS="-L/build/lws/lib" WITH_WEBSOCKETS=yes WITH_DOCS=no; \
+    make install; \
+    rm -rf /tmp/mosquitto.tar.gz /app/mosquitto-${MOSQUITTO_VERSION}
+
+# Etapa 2: Descarga del plugin (solo para extraer archivos)
+FROM alpine:3.20 AS goauth_downloader
+ARG GOAUTH_VERSION
+ARG GOAUTH_ARCH
+
+RUN set -ex; \
+    apk add --no-cache ca-certificates wget unzip; \
+    mkdir -p /tmp/goauth; \
+    wget https://github.com/iegomez/mosquitto-go-auth/releases/download/${GOAUTH_VERSION}/${GOAUTH_ARCH}.zip -O /tmp/go-auth.zip; \
+    unzip /tmp/go-auth.zip -d /tmp/goauth; \
+    rm -rf /tmp/go-auth.zip
+
+# Etapa final: Imagen mínima
+FROM alpine:3.20
+
+ARG MOSQUITTO_VERSION
+ARG GOAUTH_VERSION
+
+LABEL maintainer="your-email@example.com" \
+      mosquitto.version="${MOSQUITTO_VERSION}" \
+      go-auth.version="${GOAUTH_VERSION}" \
+      description="Mosquitto MQTT broker with go-auth plugin (Alpine-based)"
+
+ARG GOAUTH_ARCH
+
+RUN set -ex; \
+    apk add --no-cache libc-ares libssl3t libcjson libedit tini gettext-envsubst && \
+    mkdir -p /var/lib/mosquitto /var/log/mosquitto /mosquitto && \
+    addgroup -S mosquitto && \
+    adduser -S -D -H -h /var/lib/mosquitto -s /sbin/nologin -G mosquitto mosquitto
+
+COPY --from=mosquitto_builder \
+    /usr/local/sbin/mosquitto \
+    /usr/local/bin/mosquitto_passwd \
+    /usr/local/bin/mosquitto_sub \
+    /usr/local/bin/mosquitto_pub \
+    /usr/local/bin/mosquitto_rr \
+    /usr/local/bin/
+
+COPY --from=mosquitto_builder /usr/local/lib/libmosquitto* /usr/local/lib/
+COPY --from=goauth_downloader /tmp/goauth/${GOAUTH_ARCH}/go-auth.so /mosquitto/
+COPY --from=goauth_downloader /tmp/goauth/${GOAUTH_ARCH}/pw /mosquitto/
+
+RUN ldconfig && \
+    chown -R mosquitto:mosquitto /var/log/mosquitto /var/lib/mosquitto
+
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+EXPOSE 1883 1884
+
+USER mosquitto
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD mosquitto_sub -t '$SYS/#' -C 1 -W 5 || exit 1
+
+ENTRYPOINT ["/sbin/tini", "--", "/entrypoint.sh"]
+CMD ["/usr/sbin/mosquitto", "-c", "/etc/mosquitto/mosquitto.conf"]

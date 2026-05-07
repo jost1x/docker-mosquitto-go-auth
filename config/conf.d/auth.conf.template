@@ -1,0 +1,22 @@
+auth_plugin         /mosquitto/go-auth.so
+auth_opt_backends   http
+
+auth_opt_http_host  ${AUTH_HTTP_HOST}
+auth_opt_http_port  ${AUTH_HTTP_PORT}
+
+auth_opt_http_getuser_uri   ${AUTH_HTTP_GET_USER_URI}
+auth_opt_http_superuser_uri ${AUTH_HTTP_SUPER_USER_URI}
+auth_opt_http_aclcheck_uri  ${AUTH_HTTP_ACL_URI}
+
+auth_opt_cache ${AUTH_OPT_CACHE}
+auth_opt_cache_type ${AUTH_OPT_CACHE_TYPE}
+auth_opt_cache_reset ${AUTH_OPT_CACHE_RESET}
+auth_opt_cache_refresh ${AUTH_OPT_CACHE_REFRESH}
+auth_opt_auth_cache_seconds ${AUTH_OPT_AUTH_CACHE_SECONDS}
+auth_opt_acl_cache_seconds ${AUTH_OPT_ACL_CACHE_SECONDS}
+auth_opt_auth_jitter_seconds ${AUTH_OPT_AUTH_JITTER_SECONDS}
+auth_opt_acl_jitter_seconds ${AUTH_OPT_ACL_JITTER_SECONDS}
+
+auth_opt_cache_host ${AUTH_OPT_CACHE_HOST}
+auth_opt_cache_port ${AUTH_OPT_CACHE_PORT}
+auth_opt_cache_db ${AUTH_OPT_CACHE_DB}
