@@ -70,7 +70,7 @@ LABEL maintainer="your-email@example.com" \
 ARG GOAUTH_ARCH
 
 RUN set -ex; \
-    apk add --no-cache libc-ares libssl3t libcjson libedit tini gettext-envsubst && \
+    apk add --no-cache c-ares libssl3 cjson libedit tini gettext-envsubst && \
     mkdir -p /var/lib/mosquitto /var/log/mosquitto /mosquitto && \
     addgroup -S mosquitto && \
     adduser -S -D -H -h /var/lib/mosquitto -s /sbin/nologin -G mosquitto mosquitto
