@@ -4,8 +4,18 @@ on:
   push:
     branches: ["main", "master"]
     tags: ["v*"]
+    paths:
+      - "Dockerfile"
+      - "Dockerfile.alpine"
+      - "entrypoint.sh"
+      - ".github/workflows/**"
   pull_request:
     branches: ["main", "master"]
+    paths:
+      - "Dockerfile"
+      - "Dockerfile.alpine"
+      - "entrypoint.sh"
+      - ".github/workflows/**"
   workflow_dispatch:
 
 env:
