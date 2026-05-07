@@ -2,6 +2,36 @@
 
 Docker image for [Mosquitto MQTT broker](https://mosquitto.org/) with the [mosquitto-go-auth](https://github.com/iegomez/mosquitto-go-auth) plugin, using HTTP as the authentication backend and Redis/Valkey for caching.
 
+## Pre-built Images
+
+Available on GitHub Container Registry:
+
+```bash
+# Debian-based (default)
+docker pull ghcr.io/jost1x/docker-mosquitto-go-auth:latest-debian
+
+# Alpine-based (smaller)
+docker pull ghcr.io/jost1x/docker-mosquitto-go-auth:latest-alpine
+```
+
+### Supported Architectures
+
+| Variant | Architectures |
+|---|---|
+| `debian` | `linux/amd64`, `linux/arm64` |
+| `alpine` | `linux/amd64`, `linux/arm64` |
+
+### Available Tags
+
+| Tag | Description |
+|---|---|
+| `latest-debian` | Latest Debian-based image |
+| `latest-alpine` | Latest Alpine-based image |
+| `main-debian` | Debian build from `main` branch |
+| `main-alpine` | Alpine build from `main` branch |
+| `vX.Y.Z-debian` | Debian build for a specific version |
+| `vX.Y.Z-alpine` | Alpine build for a specific version |
+
 ## Quick Start
 
 1. Copy the example environment file and adjust it:
